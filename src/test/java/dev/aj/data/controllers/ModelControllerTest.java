@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +44,7 @@ import org.testcontainers.utility.DockerImageName;
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @Tag(value = "integration")
+@Slf4j
 class ModelControllerTest {
 
     @Container
@@ -55,9 +57,10 @@ class ModelControllerTest {
             .withAccessToHost(true)
             .withInitScript("data.sql")
             .withExposedPorts(5432)
+            .withReuse(true)
             .withCreateContainerCmdModifier(cmd -> {
                 cmd.withHostConfig(new HostConfig().withPortBindings(
-                        new PortBinding(Ports.Binding.bindPort(7654), new ExposedPort(5432))));
+                        new PortBinding(Ports.Binding.bindPort(8765), new ExposedPort(5432))));
             });
 
     private static RestClient restClient;
@@ -96,6 +99,7 @@ class ModelControllerTest {
         modelFromJson = objectMapper.readValue(resourceAsStream, Model.class);
     }
 
+    @SneakyThrows
     @Test
     @Order(value = 1)
     void persistCurrentModel() {
@@ -105,6 +109,9 @@ class ModelControllerTest {
 
         HttpStatusCode responseStatus = responseEntity.getStatusCode();
         Model responseBody = responseEntity.getBody();
+
+        log.info("Response object received at the 'front-end':%n%s".formatted(
+                objectMapper.writeValueAsString(responseBody)));
 
         Assertions.assertAll("Asserting new Model",
                              () -> Assertions.assertEquals(HttpStatusCode.valueOf(200), responseStatus),
@@ -142,6 +149,7 @@ class ModelControllerTest {
 
         Assertions.assertAll("Asserting saved model",
                              () -> Assertions.assertTrue(statusCode.is2xxSuccessful()),
+                             () -> Assertions.assertNotNull(savedModel),
                              () -> Assertions.assertNotNull(savedModel.getId()));
     }
 
@@ -158,14 +166,7 @@ class ModelControllerTest {
 
         Assertions.assertAll("Asserting saved model",
                              () -> Assertions.assertTrue(responseStatus.is2xxSuccessful()),
-                             () -> Assertions.assertTrue(body.size() == 4));
-    }
-
-    @Test
-    void getAModel() {
-    }
-
-    @Test
-    void updateAnExistingModel() {
+                             () -> Assertions.assertNotNull(body),
+                             () -> Assertions.assertEquals(4, body.size()));
     }
 }

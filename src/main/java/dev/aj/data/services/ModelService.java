@@ -24,15 +24,20 @@ public class ModelService {
     public Model persistAModel() {
         Model currentModel = Model.builder()
                                   .uuid(UUID.randomUUID())
+
+                                  .javaUtilDate(new Date())
+                                  .javaSqlDate(new java.sql.Date(System.currentTimeMillis()))
                                   .localDateTime(LocalDateTime.now())
                                   .offsetDateTime(OffsetDateTime.now())
                                   .zonedDateTime(ZonedDateTime.now())
-                                  .javaUtilDate(new Date())
-                                  .javaUtilDateTZ(new Date())
-                                  .javaSqlDate(new java.sql.Date(System.currentTimeMillis()))
-                                  .javaSqlDateTZ(new java.sql.Date(System.currentTimeMillis()))
-                                  .build();
 
+                                  .javaUtilDateTZ(new Date())
+                                  .javaSqlDateTZ(new java.sql.Date(System.currentTimeMillis()))
+                                  .localDateTimeTZ(LocalDateTime.now())
+                                  .offsetDateTimeTZ(OffsetDateTime.now())
+                                  .zonedDateTimeTZ(ZonedDateTime.now())
+
+                                  .build();
         return modelRepository.save(currentModel);
     }
 
@@ -69,5 +74,4 @@ public class ModelService {
                     """);
         }
     }
-
 }

@@ -37,17 +37,28 @@ public class Model extends BaseEntity{
 
     private UUID uuid;
 
-    private LocalDateTime localDateTime;
-    private OffsetDateTime offsetDateTime;
-    private ZonedDateTime zonedDateTime;
-
     private Date javaUtilDate;
+
+    private java.sql.Date javaSqlDate;
+
+    private LocalDateTime localDateTime;
+
+    private OffsetDateTime offsetDateTime;
+
+    private ZonedDateTime zonedDateTime;
 
     @Column(name = "java_util_date_tz", columnDefinition = "timestamptz")
     private Date javaUtilDateTZ;
 
-    private java.sql.Date javaSqlDate;
-
     @Column(name = "java_sql_date_tz", columnDefinition = "timestamptz")
     private java.sql.Date javaSqlDateTZ;
+
+    @Column(name = "local_date_time_tz", columnDefinition = "timestamptz")
+    private LocalDateTime localDateTimeTZ;
+
+    @Column(name = "offset_date_time_tz", columnDefinition = "timestamptz")
+    private OffsetDateTime offsetDateTimeTZ;
+
+    @Column(name = "zoned_date_time_tz", columnDefinition = "timestamptz")
+    private ZonedDateTime zonedDateTimeTZ;
 }

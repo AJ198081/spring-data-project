@@ -8,21 +8,27 @@ drop table if exists model cascade;
 
 create table if not exists model
 (
-    java_sql_date     timestamp,
-    java_sql_date_tz timestamptz,
-    created_date      timestamp,
     id                bigint not null
         primary key,
+    uuid              uuid,
+
     java_util_date    timestamp,
-    java_util_date_tz timestamptz,
-    last_updated_date timestamp,
+    java_sql_date     timestamp,
     local_date_time   timestamp,
-    offset_date_time  timestamp with time zone,
-    zoned_date_time   timestamp with time zone,
-    uuid              uuid
+    offset_date_time  timestamp,
+    zoned_date_time   timestamp,
+
+    java_util_date_tz timestamptz,
+    java_sql_date_tz timestamptz,
+    local_date_time_tz   timestamptz,
+    offset_date_time_tz  timestamptz,
+    zoned_date_time_tz   timestamptz,
+
+    created_date      timestamp,
+    last_updated_date timestamp
 );
 
-INSERT INTO model (id,
+/*INSERT INTO model (id,
                    java_sql_date,
                    created_date,
                    java_util_date,
@@ -38,4 +44,4 @@ VALUES (nextval('model_seq'),
         '2024-01-13 18:53:43.390762',
         '2024-01-13 07:53:43.390762 +00:00',
         '2024-01-13 07:53:43.390762 +00:00',
-        'd203284c-5a8a-435c-a349-a182e5fd574f');
+        'd203284c-5a8a-435c-a349-a182e5fd574f');*/
