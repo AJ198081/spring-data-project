@@ -53,6 +53,10 @@ public class ModelService {
         return modelRepository.save(model);
     }
 
+    public List<Model> persistGivenModels(List<Model> models) {
+        return modelRepository.saveAll(models);
+    }
+
     @Transactional(propagation = Propagation.REQUIRED)
     public Model updateModel(Long id, Model model) {
 

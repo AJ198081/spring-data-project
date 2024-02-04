@@ -1,8 +1,32 @@
-{
-  "uuid": "af8138bd-2492-4df6-be56-77c8a48f41e9",
-  "localDateTime": "2024-01-13T20:18:10.2398307",
-  "offsetDateTime": "2024-01-13T20:18:10.2398307+11:00",
-  "zonedDateTime": "2024-01-13T20:18:10.2398307+11:00",
-  "javaUtilDate": "2024-01-13T09:18:10.239",
-  "javaSqlDate": "2024-01-13"
-}
+[
+  {
+    "uuid": "0aa3d4fd-48ad-4158-9902-8c66e3de2af7",
+
+    "javaUtilDate": "2024-02-01T12:38:14.236+00:00",
+    "javaSqlDate": "2024-02-01",
+    "localDateTime": "2024-02-01T23:38:14.236131",
+    "offsetDateTime": "2024-02-01T12:38:14.236131Z",
+    "zonedDateTime": "2024-02-01T12:38:14.236131Z",
+
+    "javaUtilDateTZ": "2024-02-01T12:38:14.236+00:00",
+    "javaSqlDateTZ": "2024-02-01",
+    "localDateTimeTZ": "2024-02-01T23:38:14.236131",
+    "offsetDateTimeTZ": "2024-02-01T12:38:14.236131Z",
+    "zonedDateTimeTZ": "2024-02-01T12:38:14.236131Z"
+  },
+  {
+    "uuid": "d09c131d-12de-469d-ac6e-c0ad5131d870",
+
+    "javaUtilDate": "2024-02-01T20:40:37.257+00:00",
+    "javaSqlDate": "2024-02-01",
+    "localDateTime": "2024-02-01T20:40:37.2577315",
+    "offsetDateTime": "2024-02-01T20:40:37.2577315Z",
+    "zonedDateTime": "2024-02-01T20:40:37.2577315Z",
+
+    "javaUtilDateTZ": "2024-02-01T20:40:37.257+00:00",
+    "javaSqlDateTZ": "2024-02-01",
+    "localDateTimeTZ": "2024-02-01T20:40:37.2577315",
+    "offsetDateTimeTZ": "2024-02-01T20:40:37.2577315Z",
+    "zonedDateTimeTZ": "2024-02-01T20:40:37.2577315Z"
+  }
+]

@@ -1,8 +1,10 @@
 package dev.aj.data.controllers;
 
+import dev.aj.data.aspects.LogTiming;
 import dev.aj.data.domain.model.Model;
 import dev.aj.data.services.ModelService;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,6 +23,7 @@ public class ModelController {
     private final ModelService modelService;
 
     @PostMapping("/current")
+    @LogTiming(info = "Persist current time", displayPerformanceInTimeUnit = TimeUnit.MICROSECONDS)
     public ResponseEntity<Model> persistCurrentModel() {
         return ResponseEntity.ok(
                 modelService.persistAModel()
@@ -34,6 +37,13 @@ public class ModelController {
         );
     }
 
+    @PostMapping("/given/list")
+    public ResponseEntity<List<Model>> persistListOfModels(@RequestBody List<Model> models) {
+        return ResponseEntity.ok(
+                modelService.persistGivenModels(models)
+        );
+    }
+
     @GetMapping("/all")
     public ResponseEntity<List<Model>> getAllModels() {
 
@@ -43,6 +53,7 @@ public class ModelController {
     }
 
     @GetMapping("/{id}")
+    @LogTiming(info = "Fetch a model given Id", displayPerformanceInTimeUnit = TimeUnit.MICROSECONDS)
     public ResponseEntity<Model> getAModel(@PathVariable(value = "id") Long id) {
         return ResponseEntity.ok(
                 modelService.getModelById(id)

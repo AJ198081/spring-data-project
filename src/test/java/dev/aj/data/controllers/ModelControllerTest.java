@@ -1,5 +1,6 @@
 package dev.aj.data.controllers;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.dockerjava.api.model.ExposedPort;
 import com.github.dockerjava.api.model.HostConfig;
@@ -8,10 +9,14 @@ import com.github.dockerjava.api.model.Ports;
 import dev.aj.data.domain.model.Model;
 import java.io.InputStream;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +33,6 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.TestPropertySource;
@@ -39,7 +43,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
-@TestPropertySource(properties = {"server.port=9595", "spring.jpa.hibernate.ddl-auto=none"})
+@TestPropertySource(properties = {"server.port=9595",
+                                    "spring.jpa.hibernate.ddl-auto=none",
+//                                    "spring.jpa.properties.hibernate.jdbc.time_zone=UTC"
+})
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -64,13 +71,13 @@ class ModelControllerTest {
             });
 
     private static RestClient restClient;
-    @Autowired
-    private Environment environment;
+
     @Autowired
     private ObjectMapper objectMapper;
+
     private Model model;
 
-    private Model modelFromJson;
+    private List<Model> modelsFromJson;
 
     private String jdbcUrl; //jdbc:postgresql://localhost:7654/microservices-db
 
@@ -94,15 +101,13 @@ class ModelControllerTest {
                      .javaSqlDate(new java.sql.Date(System.currentTimeMillis()))
                      .javaSqlDateTZ(new java.sql.Date(System.currentTimeMillis()))
                      .build();
-        jdbcUrl = postgresContainer.getJdbcUrl();
-        InputStream resourceAsStream = this.getClass().getResourceAsStream("/model.json");
-        modelFromJson = objectMapper.readValue(resourceAsStream, Model.class);
     }
 
     @SneakyThrows
     @Test
     @Order(value = 1)
     void persistCurrentModel() {
+
         ResponseEntity<Model> responseEntity = restClient.post().uri("/timezone/current")
                                                          .retrieve()
                                                          .toEntity(Model.class);
@@ -118,22 +123,118 @@ class ModelControllerTest {
                              () -> Assertions.assertNotNull(responseBody.getId()));
     }
 
+    @SneakyThrows
     @Test
     @Order(value = 2)
     void persistGivenModel() {
-        ResponseEntity<Model> responseEntity = restClient.post().uri("/timezone/given")
-                                                         .body(modelFromJson)
+
+        InputStream resourceAsStream = this.getClass().getResourceAsStream("/model.json");
+        modelsFromJson = objectMapper.readValue(resourceAsStream, new TypeReference<List<Model>>() {});
+
+        ResponseEntity<List<Model>> responseEntity = restClient.post().uri("/timezone/given/list")
+                                                         .body(modelsFromJson)
                                                          .retrieve()
-                                                         .toEntity(Model.class);
+                                                         .toEntity(new ParameterizedTypeReference<List<Model>>() {});
 
         HttpStatusCode statusCode = responseEntity.getStatusCode();
-        Model savedModel = responseEntity.getBody();
+        List<Model> savedModel = responseEntity.getBody();
+
+        objectMapper.writeValueAsString(savedModel);
 
         Assertions.assertAll("Asserting saved model",
                              () -> Assertions.assertTrue(statusCode.is2xxSuccessful()),
-                             () -> Assertions.assertNotNull(savedModel.getId()),
-                             () -> Assertions.assertEquals(modelFromJson.getJavaUtilDate().getTime(),
-                                                           savedModel.getJavaUtilDate().getTime()));
+                             () -> Assertions.assertNotNull(savedModel),
+                             () -> Assertions.assertNotNull(savedModel.getFirst()),
+                             () -> Assertions.assertEquals(modelsFromJson.getFirst().getJavaUtilDate().getTime(),
+                                                           savedModel.getFirst().getJavaUtilDate().getTime()));
+    }
+
+    @SneakyThrows
+    @Test
+    void persistDateAtBSTAt2300AndFetchWithJVMAtBST() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/London"));
+
+        ZonedDateTime feb4th2024AtMidnight = ZonedDateTime.ofInstant(
+                LocalDateTime.of(2024, Month.JULY, 4, 0, 0, 0, 0),
+                ZoneOffset.UTC,
+                ZoneId.of("UTC"));
+
+        ZonedDateTime feb3rd2024At2300 = feb4th2024AtMidnight.minusHours(1);
+
+        Model model = Model.builder()
+                           .javaUtilDate(Date.from(feb3rd2024At2300.toInstant()))
+                           .javaUtilDateTZ(Date.from(feb3rd2024At2300.toInstant()))
+                           .javaSqlDate(new java.sql.Date(System.currentTimeMillis()))
+                           .javaSqlDateTZ(new java.sql.Date(System.currentTimeMillis()))
+                           .localDateTime(LocalDateTime.now())
+                           .localDateTimeTZ(LocalDateTime.now())
+                           .offsetDateTime(OffsetDateTime.now())
+                           .offsetDateTimeTZ(OffsetDateTime.now())
+                           .zonedDateTime(ZonedDateTime.now())
+                           .zonedDateTimeTZ(ZonedDateTime.now())
+                           .uuid(UUID.randomUUID())
+                           .build();
+
+        ResponseEntity<Model> responseEntity = restClient.post().uri("/timezone/given")
+                                                         .body(model)
+                                                         .retrieve()
+                                                         .toEntity(Model.class);
+        Model savedModel = responseEntity.getBody();
+
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/London"));
+
+        ResponseEntity<Model> responseEntity1 = restClient.get().uri("timezone/{id}", savedModel.getId())
+                                                          .retrieve()
+                                                          .toEntity(Model.class);
+        Model savedModel1 = responseEntity1.getBody();
+
+        Assertions.assertAll("Asserting saved model",
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(), savedModel1.getJavaUtilDateTZ()),
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(), savedModel1.getJavaUtilDate()));
+    }
+
+    @SneakyThrows
+    @Test
+    void persistDateAtUTCAt2300AndFetchWithJVMAtBST() {
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
+        ZonedDateTime feb4th2024AtMidnight = ZonedDateTime.ofInstant(
+                LocalDateTime.of(2024, Month.JULY, 4, 0, 0, 0, 0),
+                ZoneOffset.UTC,
+                ZoneId.of("UTC"));
+
+        ZonedDateTime feb3rd2024At2300 = feb4th2024AtMidnight.minusHours(1);
+
+        Model model = Model.builder()
+                           .javaUtilDate(Date.from(feb3rd2024At2300.toInstant()))
+                           .javaUtilDateTZ(Date.from(feb3rd2024At2300.toInstant()))
+                           .javaSqlDate(new java.sql.Date(System.currentTimeMillis()))
+                           .javaSqlDateTZ(new java.sql.Date(System.currentTimeMillis()))
+                           .localDateTime(LocalDateTime.now())
+                           .localDateTimeTZ(LocalDateTime.now())
+                           .offsetDateTime(OffsetDateTime.now())
+                           .offsetDateTimeTZ(OffsetDateTime.now())
+                           .zonedDateTime(ZonedDateTime.now())
+                           .zonedDateTimeTZ(ZonedDateTime.now())
+                           .uuid(UUID.randomUUID())
+                           .build();
+
+        ResponseEntity<Model> responseEntity = restClient.post().uri("/timezone/given")
+                                                         .body(model)
+                                                         .retrieve()
+                                                         .toEntity(Model.class);
+        Model savedModel = responseEntity.getBody();
+
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/London"));
+
+        ResponseEntity<Model> responseEntity1 = restClient.get().uri("timezone/{id}", savedModel.getId())
+                                                          .retrieve()
+                                                          .toEntity(Model.class);
+        Model savedModel1 = responseEntity1.getBody();
+
+        Assertions.assertAll("Asserting saved model",
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(), savedModel1.getJavaUtilDateTZ()),
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(), savedModel1.getJavaUtilDate()));
     }
 
     @Test
@@ -154,8 +255,10 @@ class ModelControllerTest {
     }
 
     @Test
-    @Order(value = 3)
+    @Order(value = 4)
     void getAllModels() {
+
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/London"));
         ResponseEntity<List<Model>> responseEntity = restClient.get().uri("/timezone/all")
                                                                .retrieve()
                                                                .toEntity(new ParameterizedTypeReference<List<Model>>() {
