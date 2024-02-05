@@ -28,5 +28,21 @@
     "localDateTimeTZ": "2024-02-01T20:40:37.2577315",
     "offsetDateTimeTZ": "2024-02-01T20:40:37.2577315Z",
     "zonedDateTimeTZ": "2024-02-01T20:40:37.2577315Z"
+  },
+  {
+    "createdDate" : "2024-02-05T02:12:02.263+00:00",
+    "lastUpdatedDate" : "2024-02-05T02:12:02.263+00:00",
+    "id" : 1,
+    "uuid" : "99929523-3b57-4b46-992d-1c9abdd5a12b",
+    "javaUtilDate" : "2024-02-05T02:12:02.165+00:00",
+    "javaSqlDate" : "2024-02-05",
+    "localDateTime" : "2024-02-05T13:12:02.1654912",
+    "offsetDateTime" : "2024-02-05T02:12:02.1654912Z",
+    "zonedDateTime" : "2024-02-05T02:12:02.1654912Z",
+    "javaUtilDateTZ" : "2024-02-05T02:12:02.165+00:00",
+    "javaSqlDateTZ" : "2024-02-05",
+    "localDateTimeTZ" : "2024-02-05T13:12:02.1654912",
+    "offsetDateTimeTZ" : "2024-02-05T02:12:02.1654912Z",
+    "zonedDateTimeTZ" : "2024-02-05T02:12:02.1654912Z"
   }
 ]

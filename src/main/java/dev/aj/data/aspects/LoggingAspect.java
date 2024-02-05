@@ -2,6 +2,7 @@ package dev.aj.data.aspects;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.aj.data.domain.model.Model;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;

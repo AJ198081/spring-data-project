@@ -35,6 +35,8 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -270,6 +272,6 @@ class ModelControllerTest {
         Assertions.assertAll("Asserting saved model",
                              () -> Assertions.assertTrue(responseStatus.is2xxSuccessful()),
                              () -> Assertions.assertNotNull(body),
-                             () -> Assertions.assertEquals(4, body.size()));
+                             () -> Assertions.assertEquals(5, body.size()));
     }
 }

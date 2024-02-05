@@ -8,7 +8,7 @@ drop table if exists model cascade;
 
 create table if not exists model
 (
-    id                bigint not null
+    id                serial not null
         primary key,
     uuid              uuid,
 

@@ -29,6 +29,7 @@ import org.hibernate.type.SqlTypes;
 @ToString(callSuper = false)
 public class Model extends BaseEntity{
     @Id
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "model_seq_gen")
     @SequenceGenerator(name = "model_seq_gen", sequenceName = "model_seq", initialValue = 1000, allocationSize = 5)
     @Column(name = "id", nullable = false)
