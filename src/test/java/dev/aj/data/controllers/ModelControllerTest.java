@@ -48,7 +48,7 @@ import org.testcontainers.utility.DockerImageName;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @TestPropertySource(properties = {"server.port=9595",
         "spring.jpa.hibernate.ddl-auto=none",
-                                    "spring.jpa.properties.hibernate.jdbc.time_zone=UTC"
+//                                    "spring.jpa.properties.hibernate.jdbc.time_zone=UTC"
 })
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -59,8 +59,7 @@ class ModelControllerTest {
 
     @Container
 //    @ServiceConnection
-    static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>(
-            DockerImageName.parse("postgres:16-alpine"))
+    static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"))
             .withDatabaseName("microservices-db")
             .withUsername("aj")
             .withPassword("very-secret")
