@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.PortBinding;
 import com.github.dockerjava.api.model.Ports;
 import dev.aj.data.domain.model.Model;
 import java.io.InputStream;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.time.OffsetDateTime;
@@ -35,8 +36,6 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -46,7 +45,7 @@ import org.testcontainers.utility.DockerImageName;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @TestPropertySource(properties = {"server.port=9595",
-                                    "spring.jpa.hibernate.ddl-auto=none",
+        "spring.jpa.hibernate.ddl-auto=none",
 //                                    "spring.jpa.properties.hibernate.jdbc.time_zone=UTC"
 })
 @Testcontainers
@@ -131,12 +130,14 @@ class ModelControllerTest {
     void persistGivenModel() {
 
         InputStream resourceAsStream = this.getClass().getResourceAsStream("/model.json");
-        modelsFromJson = objectMapper.readValue(resourceAsStream, new TypeReference<List<Model>>() {});
+        modelsFromJson = objectMapper.readValue(resourceAsStream, new TypeReference<List<Model>>() {
+        });
 
         ResponseEntity<List<Model>> responseEntity = restClient.post().uri("/timezone/given/list")
-                                                         .body(modelsFromJson)
-                                                         .retrieve()
-                                                         .toEntity(new ParameterizedTypeReference<List<Model>>() {});
+                                                               .body(modelsFromJson)
+                                                               .retrieve()
+                                                               .toEntity(new ParameterizedTypeReference<List<Model>>() {
+                                                               });
 
         HttpStatusCode statusCode = responseEntity.getStatusCode();
         List<Model> savedModel = responseEntity.getBody();
@@ -191,8 +192,10 @@ class ModelControllerTest {
         Model savedModel1 = responseEntity1.getBody();
 
         Assertions.assertAll("Asserting saved model",
-                             () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(), savedModel1.getJavaUtilDateTZ()),
-                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(), savedModel1.getJavaUtilDate()));
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(),
+                                                           savedModel1.getJavaUtilDateTZ()),
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(),
+                                                           savedModel1.getJavaUtilDate()));
     }
 
     @SneakyThrows
@@ -235,8 +238,63 @@ class ModelControllerTest {
         Model savedModel1 = responseEntity1.getBody();
 
         Assertions.assertAll("Asserting saved model",
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(),
+                                                           savedModel1.getJavaUtilDateTZ()),
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(),
+                                                           savedModel1.getJavaUtilDate()));
+    }
+
+    @SneakyThrows
+    @Test
+    void persistDateAtCurrentUTCWithJVMAtAuSydney() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Australia/Sydney"));
+
+        ZonedDateTime feb4th2024AtMidnight = ZonedDateTime.ofInstant(
+                LocalDateTime.of(2024, Month.JULY, 4, 0, 0, 0, 0),
+                ZoneOffset.UTC,
+                ZoneId.of("UTC"));
+
+        ZonedDateTime feb3rd2024At2300 = feb4th2024AtMidnight.minusHours(1);
+
+        OffsetDateTime nowAtUTC = OffsetDateTime.ofInstant(Instant.now(), ZoneId.of("UTC"));
+
+        Model model = Model.builder()
+                           .javaUtilDate(Date.from(nowAtUTC.toInstant()))
+                           .javaUtilDateTZ(Date.from(nowAtUTC.toInstant()))
+                           .javaSqlDate(new java.sql.Date(System.currentTimeMillis()))
+                           .javaSqlDateTZ(new java.sql.Date(System.currentTimeMillis()))
+                           .localDateTime(LocalDateTime.now())
+                           .localDateTimeTZ(LocalDateTime.now())
+                           .offsetDateTime(nowAtUTC)
+                           .offsetDateTimeTZ(nowAtUTC)
+                           .zonedDateTime(ZonedDateTime.now())
+                           .zonedDateTimeTZ(ZonedDateTime.now())
+                           .uuid(UUID.randomUUID())
+                           .build();
+
+        ResponseEntity<Model> responseEntity = restClient.post().uri("/timezone/given")
+                                                         .body(model)
+                                                         .retrieve()
+                                                         .toEntity(Model.class);
+        Model savedModel = responseEntity.getBody();
+
+//        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+
+        ResponseEntity<Model> responseEntity1 = restClient.get().uri("timezone/{id}", savedModel.getId())
+                                                          .retrieve()
+                                                          .toEntity(Model.class);
+        Model savedModel1 = responseEntity1.getBody();
+
+        Assertions.assertAll("Asserting saved model",
                              () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(), savedModel1.getJavaUtilDateTZ()),
-                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(), savedModel1.getJavaUtilDate()));
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(), savedModel1.getJavaUtilDate()),
+                             () -> Assertions.assertEquals(savedModel.getOffsetDateTime(), savedModel1.getOffsetDateTime()),
+//                             () -> org.assertj.core.api.Assertions.assertThat(savedModel.getOffsetDateTime())
+//                                                                  .isEqualToIgnoringNanos(savedModel1.getOffsetDateTime()),
+                             () -> Assertions.assertEquals(savedModel.getOffsetDateTimeTZ(), savedModel1.getOffsetDateTimeTZ())
+//                             () -> org.assertj.core.api.Assertions.assertThat(savedModel.getOffsetDateTimeTZ())
+//                                                                  .isEqualToIgnoringNanos(savedModel1.getOffsetDateTimeTZ())
+        );
     }
 
     @Test
