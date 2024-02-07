@@ -36,6 +36,8 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.RestClient;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -46,7 +48,7 @@ import org.testcontainers.utility.DockerImageName;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @TestPropertySource(properties = {"server.port=9595",
         "spring.jpa.hibernate.ddl-auto=none",
-//                                    "spring.jpa.properties.hibernate.jdbc.time_zone=UTC"
+                                    "spring.jpa.properties.hibernate.jdbc.time_zone=UTC"
 })
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -56,8 +58,8 @@ import org.testcontainers.utility.DockerImageName;
 class ModelControllerTest {
 
     @Container
-    @ServiceConnection
-    public static final PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>(
+//    @ServiceConnection
+    static PostgreSQLContainer<?> postgresContainer = new PostgreSQLContainer<>(
             DockerImageName.parse("postgres:16-alpine"))
             .withDatabaseName("microservices-db")
             .withUsername("aj")
@@ -70,6 +72,13 @@ class ModelControllerTest {
                 cmd.withHostConfig(new HostConfig().withPortBindings(
                         new PortBinding(Ports.Binding.bindPort(8765), new ExposedPort(5432))));
             });
+
+    @DynamicPropertySource
+    public static void dynamicProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url",  () -> postgresContainer.getJdbcUrl());
+        registry.add("spring.datasource.username", () ->  postgresContainer.getUsername());
+        registry.add("spring.datasource.password", () ->  postgresContainer.getPassword());
+    }
 
     private static RestClient restClient;
 
@@ -194,8 +203,13 @@ class ModelControllerTest {
         Assertions.assertAll("Asserting saved model",
                              () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(),
                                                            savedModel1.getJavaUtilDateTZ()),
+                             () -> Assertions.assertEquals(model.getJavaUtilDateTZ(),
+                                                           savedModel1.getJavaUtilDateTZ()),
                              () -> Assertions.assertEquals(savedModel.getJavaUtilDate(),
-                                                           savedModel1.getJavaUtilDate()));
+                                                           savedModel1.getJavaUtilDate()),
+                             () -> Assertions.assertEquals(model.getJavaUtilDate(),
+                                                           savedModel1.getJavaUtilDate())
+        );
     }
 
     @SneakyThrows
@@ -238,10 +252,11 @@ class ModelControllerTest {
         Model savedModel1 = responseEntity1.getBody();
 
         Assertions.assertAll("Asserting saved model",
-                             () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(),
-                                                           savedModel1.getJavaUtilDateTZ()),
-                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(),
-                                                           savedModel1.getJavaUtilDate()));
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDateTZ(), savedModel1.getJavaUtilDateTZ()),
+                             () -> Assertions.assertEquals(model.getJavaUtilDateTZ(), savedModel1.getJavaUtilDateTZ()),
+                             () -> Assertions.assertEquals(savedModel.getJavaUtilDate(), savedModel1.getJavaUtilDate()),
+                             () -> Assertions.assertEquals(model.getJavaUtilDate(), savedModel1.getJavaUtilDate())
+        );
     }
 
     @SneakyThrows
@@ -330,6 +345,6 @@ class ModelControllerTest {
         Assertions.assertAll("Asserting saved model",
                              () -> Assertions.assertTrue(responseStatus.is2xxSuccessful()),
                              () -> Assertions.assertNotNull(body),
-                             () -> Assertions.assertEquals(5, body.size()));
+                             () -> Assertions.assertEquals(6, body.size()));
     }
 }
